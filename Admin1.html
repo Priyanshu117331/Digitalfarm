@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AgriLife - Admin Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {      --primary-color: #2e7d32;
+      --secondary-color: #ffc107;
+      --dark-brown: #5d4037;
+    }
+    body {      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: #c5e1a5;
+      color: #333;
+      user-select: none;
+    }
+    /* --- START: LOGIN & MAIN CONTAINER STYLES --- */
+    #login-overlay {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.7);
+        z-index: 2000;
+        display: flex; /* Initially shown */
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        color: white;
+    }
+    #login-overlay h1 {
+        font-size: 2.5em;
+        text-shadow: 2px 2px 4px #000;
+    }
+    .login-button {
+        background: #DB4437;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;        font-size: 1.2em;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);        transition: background 0.2s;
+    }    .login-button:hover { background: #E57373; }
+
+    .game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background-image: url("background.jpg");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      overflow: hidden;
+      display: none; /* Initially hidden */
+      flex-direction: column;
+      align-items: center;      justify-content: center;
+    }
+    /* --- END: LOGIN & MAIN CONTAINER STYLES --- */
+    .top-bar-admin {
+        position: absolute;
+        top: 10px;
+        right: 10px;        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .logout-button {        background: #c62828;
+        color: white;
+        border: 2px solid white;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .bottom-nav {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;      gap: 15px;
+      z-index: 10;
+      align-items: flex-end;
+    }
+    .nav-image-button-container {
+      position: relative;
+      cursor: pointer;
+      text-align: center;      transition: transform 0.2s;
+    }
+    .nav-image-button-container:hover {
+      transform: scale(1.1);    }
+    .nav-image-button {
+      width: 80px;
+      height: 80px;
+      display: block;      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));    }
+    .nav-image-label {
+      position: absolute;
+      bottom: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(93, 64, 55, 0.95);
+      color: white;      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .admin-content-area {
+        background: rgba(0,0,0,0.5);        padding: 20px;
+        border-radius: 15px;
+        border: 3px solid var(--dark-brown);
+        width: 90%;
+        max-width: 800px;
+        color: white;
+    }
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .admin-header h2 {
+        margin: 0;
+        color: var(--secondary-color);
+        text-shadow: 1px 1px 2px #000;
+    }
+    .refresh-button {
+        background: var(--secondary-color);
+        color: var(--dark-brown);
+        border: 2px solid var(--dark-brown);
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .refresh-button:hover {        transform: scale(1.05);
+    }
+    .player-scroll-container {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 20px;        gap: 15px;
+        min-height: 120px; /* So it doesn't collapse when empty */
+    }
+    .player-card {
+        flex: 0 0 150px;
+        background: #fdfbe9;
+        color: var(--dark-brown);
+        border-radius: 10px;
+        border: 4px solid var(--dark-brown);
+        padding: 10px;
+        text-align: center;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+    .player-card img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: 2px solid var(--dark-brown);
+        object-fit: cover;
+        background-color: #e0e0e0;
+    }
+    .player-card h4 {
+        margin: 8px 0 4px 0;
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;    }
+    .player-card p {
+        margin: 0;
+        font-size: 12px;        font-weight: 600;    }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100; justify-content: center; align-items: center; }
+    .modal-content { background: #fdfbe9; padding: 20px; border-radius: 20px; border: 8px solid var(--dark-brown); width: 80%; max-width: 600px; text-align: center; position: relative; max-height: 80vh; overflow-y: auto;}
+    .modal-close { position: absolute; top: -15px; right: -15px; background: #c62828; color: white; width: 40px; height: 40px; border-radius: 50%; border: 4px solid white; font-size: 24px; font-weight: bold; cursor: pointer; }
+    .action { background: var(--dark-brown); color: white; border: none; border-radius: 15px; padding: 10px 15px; margin: 5px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+    .action:hover { background: #3e2723; }    .action.approve { background-color: #2e7d32; }    .action.decline { background-color: #c62828; }
+    .control-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px;}
+    .control-group { background: #efebe9; padding: 10px; border-radius: 8px; }    .control-group label { font-weight: 600; color: var(--dark-brown); display: block; margin-bottom: 5px; }
+    .control-group input { width: 80px; padding: 5px; border-radius: 5px; border: 1px solid #ccc; }
+    .delivery-list { list-style: none; padding: 0; }
+    .delivery-list li { background: #efebe9; margin: 10px 0; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN OVERLAY -->
+<div id="login-overlay">
+    <h1>AgriLife Admin Panel</h1>
+    <p>Please log in to continue.</p>
+    <button id="login-btn" class="login-button">Login with Google</button>
+</div>
+
+<div class="game-container" id="admin-container">
+    <div class="top-bar-admin">
+        <span id="admin-email" style="color:white; font-weight:bold; text-shadow: 1px 1px #000;"></span>
+        <button class="logout-button" id="logout-btn">Logout</button>
+    </div>    <div class="admin-content-area">
+        <div class="admin-header">
+            <h2>Player Leaderboard</h2>
+            <button class="refresh-button" onclick="renderPlayerList()">Refresh Players</button>        </div>
+        <p style="margin: 0 0 10px 0; font-size: 12px; text-align: center;">Sorted by balance: High to Low</p>
+        <div class="player-scroll-container" id="player-scroll-container">
+            <p>Loading players...</p>        </div>
+    </div>
+    <div class="bottom-nav">
+        <div class="nav-image-button-container" onclick="openModal('deliveryModal')">
+            <img src="delivery.png" alt="Manage Deliveries" class="nav-image-button">
+            <span class="nav-image-label">Manage Deliveries</span>
+        </div>
+        <div class="nav-image-button-container" onclick="openModal('pricingModal')">
+            <img src="shop.png" alt="Edit Prices" class="nav-image-button">
+            <span class="nav-image-label">Edit Prices</span>
+        </div>
+        <div class="nav-image-button-container" onclick="openModal('landModal')">            <img src="land.png" alt="Edit Land Rent" class="nav-image-button">
+            <span class="nav-image-label">Edit Land Rent</span>
+        </div>
+    </div>
+</div>
+
+<div id="deliveryModal" class="modal-overlay"> <div class="modal-content"> <button class="modal-close" onclick="closeModal('deliveryModal')">&times;</button> <h2>🚚 Manage Delivery Requests</h2> <p>Sorted by oldest request first.</p> <ul id="delivery-request-list" class="delivery-list"></ul> </div> </div><div id="pricingModal" class="modal-overlay"> <div class="modal-content"> <button class="modal-close" onclick="closeModal('pricingModal')">&times;</button> <h2>🏬 Edit Seed & Crop Prices</h2> <div id="pricing-controls" class="control-grid"></div> <button class="action" onclick="savePrices()">Save All Prices</button> </div> </div>
+<div id="landModal" class="modal-overlay"> <div class="modal-content"> <button class="modal-close" onclick="closeModal('landModal')">&times;</button> <h2>🌾 Edit Land Rent</h2> <div id="land-controls" class="control-grid"></div> <button class="action" onclick="saveLandRents()">Save Land Rents</button> </div> </div>
+
+<!-- Firebase SDKs --><script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+
+<script>
+// --- START: FIREBASE SETUP & AUTHENTICATION ---
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC3ONVGvgGkLn5Ust-CFyuROhN4_fkCUyk",  authDomain: "digital-farm-10299.firebaseapp.com",
+  projectId: "digital-farm-10299",
+  storageBucket: "digital-farm-10299.appspot.com",
+  messagingSenderId: "942238778791",
+  appId: "1:942238778791:web:90610b2670494f97e62282"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const loginOverlay = document.getElementById('login-overlay');
+const adminContainer = document.getElementById('admin-container');
+const loginBtn = document.getElementById('login-btn');const logoutBtn = document.getElementById('logout-btn');
+
+auth.onAuthStateChanged(user => {
+    if (user) {
+        // User is logged in, check for admin claim
+        user.getIdTokenResult().then(idTokenResult => {
+            if (!!idTokenResult.claims.admin) {
+                // User is an admin, show the panel
+                loginOverlay.style.display = 'none';
+                adminContainer.style.display = 'flex';
+                document.getElementById('admin-email').textContent = user.email;
+                initializeAdminPanel();
+            } else {
+                // User is not an admin, deny access
+                alert("Access Denied. You are not an administrator.");
+                auth.signOut();
+            }
+        });
+    } else {
+        // User is logged out, show the login screen
+        loginOverlay.style.display = 'flex';
+        adminContainer.style.display = 'none';
+    }
+});
+
+loginBtn.addEventListener('click', () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch(error => console.error("Login Error:", error));
+});
+
+logoutBtn.addEventListener('click', () => {
+    auth.signOut();
+});
+
+function initializeAdminPanel() {
+    renderPlayerList();
+    // Other initial data loads can go here
+}
+// --- END: FIREBASE SETUP & AUTHENTICATION ---
+
+// --- START: DATA MANAGEMENT FUNCTIONS (FIRESTORE) ---
+
+async function renderPlayerList() {
+    const container = document.getElementById('player-scroll-container');
+    container.innerHTML = '<p>Loading players...</p>';
+        try {
+        const usersSnapshot = await db.collection('users').orderBy('coins', 'desc').get();
+        if (usersSnapshot.empty) {
+            container.innerHTML = `<p>No player data found.</p>`;
+            return;
+        }        
+        container.innerHTML = usersSnapshot.docs.map(doc => {
+            const player = doc.data();
+            return `
+                <div class="player-card">
+                    <img src="${player.profileImage || 'profile.jpg'}" alt="${player.name}">
+                    <h4>${player.name || 'Unnamed Player'}</h4>
+                    <p>₹ ${player.coins}</p>
+                </div>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error("Error fetching players:", error);        container.innerHTML = `<p style="color: red;">Error loading players.</p>`;
+    }}
+
+async function renderPricingControls() {
+    const container = document.getElementById('pricing-controls');
+    container.innerHTML = 'Loading settings...';
+
+    try {
+        const configDoc = await db.collection('config').doc('gameSettings').get();
+        if (!configDoc.exists) {
+            container.innerHTML = 'Game settings not found.';
+            return;
+        }
+        const { seedData } = configDoc.data();
+        container.innerHTML = '';
+        for (const seedName in seedData) {
+            const seed = seedData[seedName];
+            container.innerHTML += `<div class="control-group"><h4>${seed.emoji || ''} ${seedName}</h4><label for="cost-${seedName}">Buy Cost (₹):</label><input type="number" id="cost-${seedName}" value="${seed.cost}" /><br/><br/><label for="sell-${seedName}">Sell Price (₹):</label><input type="number" id="sell-${seedName}" value="${seed.sellPrice}" /></div>`;
+        }
+    } catch (error) {
+        console.error("Error fetching prices:", error);
+        container.innerHTML = `<p style="color: red;">Error loading prices.</p>`;
+    }
+}
+
+async function renderLandControls() {    const container = document.getElementById('land-controls');    container.innerHTML = 'Loading settings...';
+
+    try {
+        const configDoc = await db.collection('config').doc('gameSettings').get();
+        if (!configDoc.exists) {
+            container.innerHTML = 'Game settings not found.';
+            return;
+        }
+        const { landConfig } = configDoc.data();        container.innerHTML = '';
+        for (const landSize in landConfig) {
+            const land = landConfig[landSize];
+            container.innerHTML += `<div class="control-group"><h4>🌾 Land ${landSize}</h4><label for="rent-${landSize}">Rent Cost (₹):</label><input type="number" id="rent-${landSize}" value="${land.rentCost}" /></div>`;
+        }
+    } catch (error) {
+        console.error("Error fetching land rents:", error);
+        container.innerHTML = `<p style="color: red;">Error loading land rents.</p>`;
+    }
+}
+
+async function renderDeliveryRequests() {
+    const container = document.getElementById('delivery-request-list');
+    container.innerHTML = '<li>Loading requests...</li>';
+    
+    try {
+        const query = db.collection('deliveries').where('status', '==', 'pending').orderBy('requestTime', 'asc');
+        const snapshot = await query.get();
+
+        if (snapshot.empty) {
+            container.innerHTML = '<li>No pending delivery requests.</li>';
+            return;
+        }
+
+        container.innerHTML = snapshot.docs.map(doc => {
+            const req = doc.data();
+            const deliveryId = doc.id;            return `
+                <li>
+                    <span><strong>Player:</strong> ${req.playerName}<br><strong>Crop:</strong> ${req.crop}</span>
+                    <div>
+                        <button class="action approve" onclick="handleDeliveryAction('${deliveryId}', 'approve')">Approve</button>
+                        <button class="action decline" onclick="handleDeliveryAction('${deliveryId}', 'decline')">Decline</button>
+                    </div>
+                </li>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error("Error fetching delivery requests:", error);
+        container.innerHTML = `<li>Error loading requests.</li>`;    }
+}
+
+async function savePrices() {
+    try {
+        const configRef = db.collection('config').doc('gameSettings');
+        const doc = await configRef.get();        if (!doc.exists) throw new Error("Config document does not exist.");
+
+        const newSeedData = { ...doc.data().seedData };        for (const seedName in newSeedData) {
+            newSeedData[seedName].cost = parseInt(document.getElementById(`cost-${seedName}`).value, 10);
+            newSeedData[seedName].sellPrice = parseInt(document.getElementById(`sell-${seedName}`).value, 10);        }
+                await configRef.update({ seedData: newSeedData });
+        alert('Prices updated successfully!');
+        closeModal('pricingModal');
+    } catch (error) {
+        console.error("Error saving prices:", error);
+        alert("Failed to save prices.");
+    }
+}
+
+async function saveLandRents() {
+    try {
+        const configRef = db.collection('config').doc('gameSettings');        const doc = await configRef.get();
+        if (!doc.exists) throw new Error("Config document does not exist.");
+
+        const newLandConfig = { ...doc.data().landConfig };
+        for (const landSize in newLandConfig) {
+            newLandConfig[landSize].rentCost = parseInt(document.getElementById(`rent-${landSize}`).value, 10);
+        }
+
+        await configRef.update({ landConfig: newLandConfig });
+        alert('Land rents updated successfully!');
+        closeModal('landModal');    } catch (error) {
+        console.error("Error saving land rents:", error);
+        alert("Failed to save land rents.");
+    }
+}async function handleDeliveryAction(deliveryId, action) {
+    const deliveryRef = db.collection('deliveries').doc(deliveryId);
+
+    try {
+        if (action === 'approve') {
+            await deliveryRef.update({
+                status: 'in_progress',
+                stage: 'ordered',
+                stageStartTime: firebase.firestore.FieldValue.serverTimestamp()
+            });            alert('Request approved and sent to player.');
+        } else if (action === 'decline') {
+            const deliveryDoc = await deliveryRef.get();
+            if (!deliveryDoc.exists) throw new Error("Delivery request not found.");
+            
+            const { playerId, crop } = deliveryDoc.data();            const userRef = db.collection('users').doc(playerId);
+            
+            // Use a transaction to safely return the item and delete the request
+            await db.runTransaction(async (transaction) => {
+                const userDoc = await transaction.get(userRef);
+                if (!userDoc.exists) throw new Error("Player not found!");                const currentCrops = userDoc.data().harvestedCrops || {};
+                const newCount = (currentCrops[crop] || 0) + 1;
+                
+                transaction.update(userRef, { [`harvestedCrops.${crop}`]: newCount });
+                transaction.delete(deliveryRef);
+            });
+            alert(`Request declined. 1 ${crop} has been returned to the player.`);
+        }
+        renderDeliveryRequests(); // Refresh the list
+    } catch (error) {
+        console.error("Error handling delivery action:", error);        alert("An error occurred. Please try again.");
+    }
+}
+
+function openModal(id) {
+    if (id === 'pricingModal') renderPricingControls();
+    if (id === 'landModal') renderLandControls();
+    if (id === 'deliveryModal') renderDeliveryRequests();
+    document.getElementById(id).style.display = 'flex';
+}
+
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+
+// No longer need DOMContentLoaded, as initialization is handled by the auth state change
+</script>
+</body>
+</html>
